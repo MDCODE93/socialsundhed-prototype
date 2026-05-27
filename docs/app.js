@@ -28,6 +28,7 @@ async function init() {
     renderBorgere();
     populateForm();
     renderReports();
+    updateCounters();
   } catch (err) {
     console.error(err);
     status.textContent = "Fejl: " + err.message;
@@ -247,6 +248,7 @@ function populateForm() {
       fb.textContent = `✓ Ledsagelse #${nextId} gemt`;
       fb.className = "feedback ok";
       setTimeout(() => { fb.textContent = ""; }, 3000);
+      updateCounters();
 
       // ryd kun dato + type — behold borger valgt
       $("#ny-dato").value = new Date().toISOString().slice(0, 10);
@@ -324,7 +326,19 @@ function renderReports() {
   $("#rep-5").innerHTML = tableFromRows(r5);
 }
 
-$("#refresh-reports").addEventListener("click", renderReports);
+$("#refresh-reports").addEventListener("click", () => {
+  renderReports();
+  updateCounters();
+});
+
+// ── Live row counters (skala-banner) ──────────────────────────────
+function updateCounters() {
+  const fmt = (n) => n.toLocaleString("da-DK");
+  $("#cnt-ledsagelser").textContent = fmt(query("SELECT COUNT(*) AS n FROM ledsagelse")[0].n);
+  $("#cnt-forloeb").textContent     = fmt(query("SELECT COUNT(*) AS n FROM forloeb")[0].n);
+  $("#cnt-borgere").textContent     = fmt(query("SELECT COUNT(*) AS n FROM borger")[0].n);
+  $("#cnt-kontakter").textContent   = fmt(query("SELECT COUNT(*) AS n FROM kontakt")[0].n);
+}
 
 // ── Start ─────────────────────────────────────────────────────────
 init();

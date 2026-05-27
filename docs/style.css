@@ -26,6 +26,24 @@ header .sub { margin: 0; opacity: 0.85; font-size: 14px; }
   border-radius: 10px; vertical-align: middle;
 }
 
+/* ── Scale banner ──────────────────────────────────────────────── */
+.scale-banner { padding-top: 20px; }
+.scale-card {
+  display: flex; gap: 16px; align-items: flex-start;
+  background: #fffaf0; border: 1px solid #f4d8a8;
+  border-left: 4px solid #d97706;
+  border-radius: 8px; padding: 14px 18px;
+  font-size: 14px; line-height: 1.5;
+}
+.scale-icon {
+  font-size: 22px; color: #d97706; line-height: 1;
+}
+.scale-text strong { color: #92400e; }
+.scale-text span { color: #57534e; }
+#cnt-ledsagelser, #cnt-forloeb, #cnt-borgere, #cnt-kontakter {
+  font-weight: 600; color: #92400e; font-variant-numeric: tabular-nums;
+}
+
 /* ── Tabs ──────────────────────────────────────────────────────── */
 .tabs {
   display: flex; gap: 4px; align-items: center;
