@@ -158,7 +158,7 @@ def rdate(start: date, end: date) -> date:
         return end
     return start + timedelta(days=random.randint(0, delta))
 
-def insert_borgere(cur, n=600):
+def insert_borgere(cur, n=5500):
     today = date(2026, 5, 27)
     for i in range(1, n + 1):
         oprettet = rdate(date(2023, 1, 1), today)
@@ -195,7 +195,7 @@ def insert_aktoerer(cur):
     for i, (typ, navn, reg) in enumerate(AKTOERER, start=1):
         cur.execute("INSERT INTO sundhedsaktoer VALUES (?,?,?,?)", (i, typ, navn, reg))
 
-def insert_forloeb(cur, n_borgere=600):
+def insert_forloeb(cur, n_borgere=5500):
     today = date(2026, 5, 27)
     forloeb_id = 0
     # Hver borger har 1-3 forløb
@@ -246,8 +246,8 @@ def insert_ledsagelser_og_kontakter(cur, n_forloeb):
         slut = date.fromisoformat(slut) if slut else today
         if slut <= start:
             continue
-        # 3-15 ledsagelser pr. forløb -- skalerer over SharePoint-grænsen (5.000)
-        n_l = random.randint(3, 15)
+        # 1-6 ledsagelser pr. forløb -- skalerer over SharePoint-grænsen (5.000)
+        n_l = random.randint(1, 6)
         for _ in range(n_l):
             ledsagelse_id += 1
             cur.execute(
@@ -259,8 +259,8 @@ def insert_ledsagelser_og_kontakter(cur, n_forloeb):
                  random.choice([30, 45, 60, 90, 120, 180]),
                  random.choice(TRANSPORT)),
             )
-        # 4-20 kontakter pr. forløb
-        n_k = random.randint(4, 20)
+        # 2-10 kontakter pr. forløb
+        n_k = random.randint(2, 10)
         for _ in range(n_k):
             kontakt_id += 1
             cur.execute(
@@ -284,8 +284,8 @@ def main():
     insert_henvisning(cur)
     insert_aktoerer(cur)
     insert_brobyggere(cur)
-    insert_borgere(cur, n=600)
-    n_f = insert_forloeb(cur, n_borgere=600)
+    insert_borgere(cur, n=5500)
+    n_f = insert_forloeb(cur, n_borgere=5500)
     n_l, n_k = insert_ledsagelser_og_kontakter(cur, n_f)
     conn.commit()
 

@@ -97,7 +97,7 @@ function renderBorgere() {
   if (statusFilter === "aktive")  where.push("aktive > 0");
   if (statusFilter === "lukkede") where.push("b.lukket_dato IS NOT NULL");
   if (where.length) sql += " WHERE " + where.join(" AND ");
-  sql += " ORDER BY b.borger_id LIMIT 500";
+  sql += " ORDER BY b.borger_id LIMIT 10000";
 
   let rows = query(sql);
   if (search) {
@@ -107,6 +107,10 @@ function renderBorgere() {
       (r.saarbarhed_primaer || "").toLowerCase().includes(search)
     );
   }
+
+  // Vis tællerlinje
+  const counter = $("#borger-count");
+  if (counter) counter.textContent = `${rows.length.toLocaleString("da-DK")} borgere vist`;
 
   const tbody = $("#borger-table tbody");
   tbody.innerHTML = rows.map(r => `
