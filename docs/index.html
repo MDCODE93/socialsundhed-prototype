@@ -49,7 +49,9 @@
       <div class="list-pane">
         <table id="borger-table">
           <thead><tr>
-            <th>ID</th><th>Alder</th><th>Køn</th><th>Postnr</th><th>Sårbarhed</th><th>Oprettet</th>
+            <th>ID</th><th>Status</th><th>Alder</th><th>Køn</th><th>Postnr</th>
+            <th>Sårbarhed</th><th>Brobygger</th><th class="num">#Lds</th>
+            <th>Sidste aktivitet</th><th>Oprettet</th>
           </tr></thead>
           <tbody></tbody>
         </table>
@@ -124,32 +126,40 @@
     <h2>Standardrapporter</h2>
     <p class="hint">Disse fem rapporter kører live mod databasen — også med eventuelle nye registreringer fra denne session.</p>
 
-    <article class="report">
+    <article class="report" data-rep="1" data-title="Aktive forløb lige nu">
       <h3>1. Aktive forløb lige nu</h3>
       <div id="rep-1"></div>
+      <div class="report-actions"><button class="secondary" data-pdf="1">⬇ Download PDF</button></div>
     </article>
 
-    <article class="report">
+    <article class="report" data-rep="2" data-title="Ledsagelser pr. måned (sidste 12 mdr)">
       <h3>2. Ledsagelser pr. måned (sidste 12 mdr)</h3>
       <div id="rep-2"></div>
+      <div class="report-actions"><button class="secondary" data-pdf="2">⬇ Download PDF</button></div>
     </article>
 
-    <article class="report">
+    <article class="report" data-rep="3" data-title="Ventetid: borger oprettet → første ledsagelse">
       <h3>3. Ventetid: borger oprettet → første ledsagelse</h3>
       <div id="rep-3"></div>
+      <div class="report-actions"><button class="secondary" data-pdf="3">⬇ Download PDF</button></div>
     </article>
 
-    <article class="report">
+    <article class="report" data-rep="4" data-title="Top 5 sundhedsaktører efter antal ledsagelser">
       <h3>4. Top 5 sundhedsaktører efter antal ledsagelser</h3>
       <div id="rep-4"></div>
+      <div class="report-actions"><button class="secondary" data-pdf="4">⬇ Download PDF</button></div>
     </article>
 
-    <article class="report">
+    <article class="report" data-rep="5" data-title="Andel forløb afsluttet inden for 6 mdr, pr. henvisende instans">
       <h3>5. Andel forløb afsluttet inden for 6 mdr, pr. henvisende instans</h3>
       <div id="rep-5"></div>
+      <div class="report-actions"><button class="secondary" data-pdf="5">⬇ Download PDF</button></div>
     </article>
 
-    <button id="refresh-reports" class="primary">Genberegn rapporter</button>
+    <div style="display:flex; gap:12px; margin-top:8px;">
+      <button id="refresh-reports" class="primary">Genberegn rapporter</button>
+      <button id="download-all" class="primary">⬇ Download samlet rapport (PDF)</button>
+    </div>
   </section>
 
 </main>
@@ -160,6 +170,9 @@
 
 <!-- sql.js fra CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<!-- jsPDF + autotable til rapport-download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -6,6 +6,7 @@
 let db = null;
 let selectedBorgerId = null;
 const recentRegistrations = [];
+const reportData = {};  // cache: { 1: {title, rows}, 2: {...}, ... }
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -88,11 +89,39 @@ function renderBorgere() {
   const statusFilter = $("#borger-status").value;
 
   let sql = `
+    WITH led_agg AS (
+      SELECT f.borger_id,
+             COUNT(l.ledsagelse_id) AS n_ledsagelser,
+             MAX(l.dato)            AS sidste_aktivitet
+      FROM forloeb f
+      LEFT JOIN ledsagelse l ON l.forloeb_id = f.forloeb_id
+      GROUP BY f.borger_id
+    ),
+    brob AS (
+      SELECT f.borger_id, br.navn AS brobygger_navn,
+             ROW_NUMBER() OVER (PARTITION BY f.borger_id
+               ORDER BY CASE f.status WHEN 'aktiv' THEN 0 ELSE 1 END,
+                        f.start_dato DESC) AS rn
+      FROM forloeb f
+      LEFT JOIN brobygger br ON br.brobygger_id = f.brobygger_id
+    )
     SELECT b.borger_id, b.alder_kategori, b.koen, b.postnr,
            b.saarbarhed_primaer, b.oprettet_dato, b.lukket_dato,
+           CASE
+             WHEN b.lukket_dato IS NOT NULL THEN 'lukket'
+             WHEN (SELECT COUNT(*) FROM forloeb f
+                    WHERE f.borger_id = b.borger_id AND f.status='aktiv') > 0
+               THEN 'aktiv'
+             ELSE 'inaktiv'
+           END AS borger_status,
            (SELECT COUNT(*) FROM forloeb f
-             WHERE f.borger_id = b.borger_id AND f.status='aktiv') AS aktive
-    FROM borger b`;
+             WHERE f.borger_id = b.borger_id AND f.status='aktiv') AS aktive,
+           brob.brobygger_navn,
+           COALESCE(led_agg.n_ledsagelser, 0) AS n_ledsagelser,
+           led_agg.sidste_aktivitet
+    FROM borger b
+    LEFT JOIN led_agg ON led_agg.borger_id = b.borger_id
+    LEFT JOIN brob    ON brob.borger_id    = b.borger_id AND brob.rn = 1`;
   const where = [];
   if (statusFilter === "aktive")  where.push("aktive > 0");
   if (statusFilter === "lukkede") where.push("b.lukket_dato IS NOT NULL");
@@ -104,7 +133,8 @@ function renderBorgere() {
     rows = rows.filter(r =>
       String(r.borger_id).includes(search) ||
       (r.postnr || "").toLowerCase().includes(search) ||
-      (r.saarbarhed_primaer || "").toLowerCase().includes(search)
+      (r.saarbarhed_primaer || "").toLowerCase().includes(search) ||
+      (r.brobygger_navn || "").toLowerCase().includes(search)
     );
   }
 
@@ -116,10 +146,14 @@ function renderBorgere() {
   tbody.innerHTML = rows.map(r => `
     <tr data-id="${r.borger_id}" class="${r.borger_id === selectedBorgerId ? "selected" : ""}">
       <td>#${r.borger_id}</td>
+      <td><span class="pill ${r.borger_status}">${r.borger_status}</span></td>
       <td>${r.alder_kategori}</td>
       <td>${r.koen}</td>
       <td>${r.postnr}</td>
       <td>${r.saarbarhed_primaer}</td>
+      <td>${r.brobygger_navn || '–'}</td>
+      <td class="num">${r.n_ledsagelser}</td>
+      <td>${r.sidste_aktivitet || '–'}</td>
       <td>${r.oprettet_dato}</td>
     </tr>`).join("");
 
@@ -154,7 +188,7 @@ function renderBorgerDetail(id) {
     JOIN forloeb f ON f.forloeb_id = k.forloeb_id WHERE f.borger_id=?`, [id])[0].n;
 
   const forloebHtml = forloeb.map(f => `
-    <div style="border-left:3px solid #2563a0; padding:6px 10px; margin:6px 0; background:#f8fafc;">
+    <div style="border-left:3px solid #e87722; padding:6px 10px; margin:6px 0; background:#fff9f3;">
       <div><strong>Forløb #${f.forloeb_id}</strong>
         <span class="pill ${f.status}">${f.status}</span></div>
       <div style="font-size:13px; color:#4b5563;">
@@ -280,8 +314,9 @@ function renderRecent() {
 // ── Tab: Rapporter ────────────────────────────────────────────────
 function renderReports() {
   // 1
-  const r1 = query("SELECT COUNT(*) AS aktive_forloeb FROM forloeb WHERE status='aktiv'")[0];
-  $("#rep-1").innerHTML = `<div class="big-number">${r1.aktive_forloeb}</div>`;
+  const r1 = query("SELECT COUNT(*) AS aktive_forloeb FROM forloeb WHERE status='aktiv'");
+  $("#rep-1").innerHTML = `<div class="big-number">${r1[0].aktive_forloeb}</div>`;
+  reportData[1] = { title: "Aktive forløb lige nu", rows: r1 };
 
   // 2
   const r2 = query(`
@@ -290,6 +325,7 @@ function renderReports() {
     WHERE dato >= date('2026-05-27','-12 months')
     GROUP BY maaned ORDER BY maaned`);
   $("#rep-2").innerHTML = tableFromRows(r2);
+  reportData[2] = { title: "Ledsagelser pr. måned (sidste 12 mdr)", rows: r2 };
 
   // 3
   const r3 = query(`
@@ -308,6 +344,7 @@ function renderReports() {
       MIN(dage) AS min_dage, MAX(dage) AS max_dage, COUNT(*) AS n_borgere
     FROM v`);
   $("#rep-3").innerHTML = tableFromRows(r3);
+  reportData[3] = { title: "Ventetid: borger oprettet → første ledsagelse", rows: r3 };
 
   // 4
   const r4 = query(`
@@ -315,6 +352,7 @@ function renderReports() {
     FROM ledsagelse l JOIN sundhedsaktoer s ON s.aktoer_id=l.aktoer_id
     GROUP BY s.aktoer_id ORDER BY antal_ledsagelser DESC LIMIT 5`);
   $("#rep-4").innerHTML = tableFromRows(r4);
+  reportData[4] = { title: "Top 5 sundhedsaktører efter antal ledsagelser", rows: r4 };
 
   // 5
   const r5 = query(`
@@ -328,12 +366,119 @@ function renderReports() {
     FROM forloeb f JOIN henvisningskilde h ON h.kilde_id=f.kilde_id
     GROUP BY h.kilde_id ORDER BY andel_pct DESC`);
   $("#rep-5").innerHTML = tableFromRows(r5);
+  reportData[5] = { title: "Andel forløb afsluttet inden for 6 mdr, pr. henvisende instans", rows: r5 };
+}
+
+// ── PDF-eksport (Social Sundhed orange tema) ──────────────────────────────────────
+const BRAND_ORANGE = [232, 119, 34];     // #e87722
+const BRAND_DARK   = [184,  89, 14];     // #b8590e
+const BRAND_LIGHT  = [255, 244, 232];    // #fff4e8
+
+function pdfHeader(doc, subtitle) {
+  // Orange bånd
+  doc.setFillColor(...BRAND_ORANGE);
+  doc.rect(0, 0, doc.internal.pageSize.getWidth(), 22, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.text("Social Sundhed Aarhus", 14, 11);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Brobygger-prototype · syntetiske data", 14, 17);
+
+  // Undertitel
+  doc.setTextColor(40, 40, 40);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.text(subtitle, 14, 32);
+
+  // Dato linje
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(120, 120, 120);
+  const dato = new Date().toLocaleString("da-DK");
+  doc.text(`Genereret: ${dato}`, 14, 38);
+}
+
+function pdfFooter(doc) {
+  const pageCount = doc.internal.getNumberOfPages();
+  const w = doc.internal.pageSize.getWidth();
+  const h = doc.internal.pageSize.getHeight();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(...BRAND_ORANGE);
+    doc.setLineWidth(0.5);
+    doc.line(14, h - 14, w - 14, h - 14);
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Prototype · Martin Davidsen · maj 2026", 14, h - 8);
+    doc.text(`Side ${i} af ${pageCount}`, w - 14, h - 8, { align: "right" });
+  }
+}
+
+function addReportTable(doc, startY, rep) {
+  if (!rep.rows.length) {
+    doc.setFontSize(11);
+    doc.setTextColor(120, 120, 120);
+    doc.text("Ingen data.", 14, startY);
+    return startY + 8;
+  }
+  const cols = Object.keys(rep.rows[0]);
+  const body = rep.rows.map(r => cols.map(c => (r[c] === null || r[c] === undefined) ? "" : String(r[c])));
+  doc.autoTable({
+    startY: startY,
+    head: [cols],
+    body: body,
+    theme: "grid",
+    styles: { font: "helvetica", fontSize: 9, cellPadding: 3 },
+    headStyles: { fillColor: BRAND_ORANGE, textColor: 255, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: BRAND_LIGHT },
+    margin: { left: 14, right: 14 },
+  });
+  return doc.lastAutoTable.finalY + 8;
+}
+
+function downloadReportPdf(repNum) {
+  const rep = reportData[repNum];
+  if (!rep) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  pdfHeader(doc, `Rapport ${repNum}: ${rep.title}`);
+  addReportTable(doc, 46, rep);
+  pdfFooter(doc);
+  doc.save(`socialsundhed_rapport_${repNum}.pdf`);
+}
+
+function downloadAllReportsPdf() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  pdfHeader(doc, "Samlet rapport — alle standardrapporter");
+  let y = 46;
+  for (const num of [1, 2, 3, 4, 5]) {
+    const rep = reportData[num];
+    if (!rep) continue;
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(...BRAND_DARK);
+    doc.text(`${num}. ${rep.title}`, 14, y);
+    y = addReportTable(doc, y + 4, rep);
+  }
+  pdfFooter(doc);
+  doc.save("socialsundhed_samlet_rapport.pdf");
 }
 
 $("#refresh-reports").addEventListener("click", () => {
   renderReports();
   updateCounters();
 });
+
+// PDF-download knapper
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-pdf]");
+  if (btn) downloadReportPdf(Number(btn.dataset.pdf));
+});
+$("#download-all").addEventListener("click", downloadAllReportsPdf);
 
 // ── Live row counters (skala-banner) ──────────────────────────────
 function updateCounters() {

@@ -6,13 +6,13 @@ body {
   font-size: 15px;
   line-height: 1.5;
   color: #1f2937;
-  background: #f5f7fa;
+  background: #fdf9f4;
 }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
 
 /* ── Header ────────────────────────────────────────────────────── */
 header {
-  background: linear-gradient(135deg, #1e4a72 0%, #2563a0 100%);
+  background: linear-gradient(135deg, #b8590e 0%, #e87722 100%);
   color: white;
   padding: 24px 0 20px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
@@ -57,8 +57,8 @@ header .sub { margin: 0; opacity: 0.85; font-size: 14px; }
   color: #4b5563; border-bottom: 3px solid transparent;
   transition: all 0.15s;
 }
-.tab:hover { color: #1e4a72; background: #f9fafb; }
-.tab.active { color: #1e4a72; border-bottom-color: #1e4a72; }
+.tab:hover { color: #b8590e; background: #fff4e8; }
+.tab.active { color: #b8590e; border-bottom-color: #e87722; }
 .status {
   margin-left: auto; font-size: 13px; color: #6b7280;
 }
@@ -69,7 +69,7 @@ header .sub { margin: 0; opacity: 0.85; font-size: 14px; }
 main { padding: 24px 0 48px; }
 .panel { display: none; }
 .panel.active { display: block; }
-.panel h2 { margin: 0 0 8px; font-size: 18px; color: #1e4a72; }
+.panel h2 { margin: 0 0 8px; font-size: 18px; color: #b8590e; }
 .panel h3 { margin: 20px 0 8px; font-size: 15px; color: #374151; }
 
 /* ── Toolbar ───────────────────────────────────────────────────── */
@@ -100,7 +100,8 @@ main { padding: 24px 0 48px; }
   background: white; border: 1px solid #e2e7ee; border-radius: 8px;
   overflow: hidden;
 }
-.list-pane { max-height: 600px; overflow-y: auto; }
+.list-pane { max-height: 600px; overflow: auto; }
+.list-pane table { min-width: 900px; }
 .detail-pane { padding: 16px; min-height: 200px; }
 
 /* ── Tables ────────────────────────────────────────────────────── */
@@ -111,12 +112,12 @@ th {
   position: sticky; top: 0; font-size: 13px;
 }
 tbody tr { cursor: pointer; transition: background 0.1s; }
-tbody tr:hover { background: #f0f6ff; }
-tbody tr.selected { background: #e0edff; }
+tbody tr:hover { background: #fff4e8; }
+tbody tr.selected { background: #ffe4cc; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* ── Detail pane content ───────────────────────────────────────── */
-.detail-pane h4 { margin: 0 0 4px; font-size: 16px; color: #1e4a72; }
+.detail-pane h4 { margin: 0 0 4px; font-size: 16px; color: #b8590e; }
 .detail-pane .meta { font-size: 13px; color: #6b7280; margin-bottom: 16px; }
 .detail-pane .sub-section { margin-top: 16px; }
 .detail-pane .sub-section h5 {
@@ -131,6 +132,8 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .pill.afsluttet { background: #e0e7ff; color: #3730a3; }
 .pill.pauseret  { background: #fef3c7; color: #92400e; }
 .pill.afbrudt   { background: #fee2e2; color: #991b1b; }
+.pill.lukket    { background: #e5e7eb; color: #374151; }
+.pill.inaktiv   { background: #fef3c7; color: #92400e; }
 
 /* ── Forms ─────────────────────────────────────────────────────── */
 form .row {
@@ -146,16 +149,16 @@ form input, form select {
   border-radius: 6px; font-size: 14px; background: white;
 }
 form input:focus, form select:focus {
-  outline: none; border-color: #2563a0;
-  box-shadow: 0 0 0 3px rgba(37,99,160,0.15);
+  outline: none; border-color: #e87722;
+  box-shadow: 0 0 0 3px rgba(232,119,34,0.18);
 }
 
 button.primary {
-  background: #2563a0; color: white; border: none;
+  background: #e87722; color: white; border: none;
   padding: 10px 20px; border-radius: 6px; font-size: 14px;
-  font-weight: 500; cursor: pointer; transition: background 0.15s;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
 }
-button.primary:hover { background: #1e4a72; }
+button.primary:hover { background: #b8590e; }
 button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
 
 .feedback { margin-left: 12px; font-size: 14px; }
@@ -167,10 +170,19 @@ button.primary:disabled { background: #9ca3af; cursor: not-allowed; }
   background: white; border: 1px solid #e2e7ee; border-radius: 8px;
   padding: 16px 20px; margin-bottom: 16px;
 }
-.report h3 { margin-top: 0; color: #1e4a72; }
+.report h3 { margin-top: 0; color: #b8590e; }
 .report .big-number {
-  font-size: 36px; font-weight: 600; color: #1e4a72;
+  font-size: 36px; font-weight: 600; color: #e87722;
 }
+.report .report-actions {
+  display: flex; gap: 8px; margin-top: 12px;
+}
+button.secondary {
+  background: white; color: #b8590e; border: 1px solid #e87722;
+  padding: 6px 14px; border-radius: 6px; font-size: 13px;
+  font-weight: 500; cursor: pointer; transition: all 0.15s;
+}
+button.secondary:hover { background: #fff4e8; }
 
 /* ── Footer ────────────────────────────────────────────────────── */
 footer {
