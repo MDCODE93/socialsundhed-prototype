@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Sundhed Aarhus — Brobygger-prototype</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Social Sundhed Aarhus <span class="tag">prototype</span></h1>
+    <p class="sub">Demo med <strong>syntetiske data</strong> — kører lokalt i browseren via SQLite (WebAssembly). Ingen data forlader din maskine.</p>
+  </div>
+</header>
+
+<nav class="tabs wrap">
+  <button class="tab active" data-tab="borgere">Borgere</button>
+  <button class="tab" data-tab="ny">Ny registrering</button>
+  <button class="tab" data-tab="rapporter">Rapporter</button>
+  <span class="status" id="status">Indlæser database…</span>
+</nav>
+
+<main class="wrap">
+
+  <!-- ── BORGERE ─────────────────────────────────────────────────────── -->
+  <section id="tab-borgere" class="panel active">
+    <div class="toolbar">
+      <input type="search" id="borger-search" placeholder="Søg på borger-ID, postnr, sårbarhed…">
+      <select id="borger-status">
+        <option value="alle">Alle borgere</option>
+        <option value="aktive">Med aktivt forløb</option>
+        <option value="lukkede">Lukkede</option>
+      </select>
+    </div>
+    <div class="split">
+      <div class="list-pane">
+        <table id="borger-table">
+          <thead><tr>
+            <th>ID</th><th>Alder</th><th>Køn</th><th>Postnr</th><th>Sårbarhed</th><th>Oprettet</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <aside id="borger-detail" class="detail-pane">
+        <p class="hint">Klik på en borger for at se forløb, ledsagelser og kontakter.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ── NY REGISTRERING ─────────────────────────────────────────────── -->
+  <section id="tab-ny" class="panel">
+    <h2>Registrér ny ledsagelse</h2>
+    <p class="hint">Som brobygger ville du her registrere en gennemført ledsagelse efter dagens besøg.</p>
+    <form id="ny-form">
+      <div class="row">
+        <label>Borger
+          <select name="borger_id" id="ny-borger" required></select>
+        </label>
+        <label>Forløb
+          <select name="forloeb_id" id="ny-forloeb" required></select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Dato
+          <input type="date" name="dato" id="ny-dato" required>
+        </label>
+        <label>Sundhedsaktør
+          <select name="aktoer_id" id="ny-aktoer" required></select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Type
+          <select name="type" required>
+            <option>konsultation</option>
+            <option>ambulant behandling</option>
+            <option>indlæggelse</option>
+            <option>scanning/prøve</option>
+            <option>psykolog/samtale</option>
+            <option>tandlæge</option>
+          </select>
+        </label>
+        <label>Varighed (min)
+          <input type="number" name="varighed_min" value="60" min="15" max="480" step="15" required>
+        </label>
+        <label>Transport
+          <select name="transport" required>
+            <option>til fods</option>
+            <option>bus</option>
+            <option>letbane</option>
+            <option>bil m. brobygger</option>
+            <option>Flextrafik</option>
+            <option>egen cykel</option>
+          </select>
+        </label>
+      </div>
+      <button type="submit" class="primary">Gem ledsagelse</button>
+      <span id="ny-feedback" class="feedback"></span>
+    </form>
+
+    <h3>Senest registrerede (denne session)</h3>
+    <table id="ny-recent">
+      <thead><tr>
+        <th>Tidspunkt</th><th>Borger</th><th>Aktør</th><th>Type</th><th>Varighed</th>
+      </tr></thead>
+      <tbody><tr><td colspan="5" class="hint">Ingen registreringer endnu.</td></tr></tbody>
+    </table>
+  </section>
+
+  <!-- ── RAPPORTER ───────────────────────────────────────────────────── -->
+  <section id="tab-rapporter" class="panel">
+    <h2>Standardrapporter</h2>
+    <p class="hint">Disse fem rapporter kører live mod databasen — også med eventuelle nye registreringer fra denne session.</p>
+
+    <article class="report">
+      <h3>1. Aktive forløb lige nu</h3>
+      <div id="rep-1"></div>
+    </article>
+
+    <article class="report">
+      <h3>2. Ledsagelser pr. måned (sidste 12 mdr)</h3>
+      <div id="rep-2"></div>
+    </article>
+
+    <article class="report">
+      <h3>3. Ventetid: borger oprettet → første ledsagelse</h3>
+      <div id="rep-3"></div>
+    </article>
+
+    <article class="report">
+      <h3>4. Top 5 sundhedsaktører efter antal ledsagelser</h3>
+      <div id="rep-4"></div>
+    </article>
+
+    <article class="report">
+      <h3>5. Andel forløb afsluttet inden for 6 mdr, pr. henvisende instans</h3>
+      <div id="rep-5"></div>
+    </article>
+
+    <button id="refresh-reports" class="primary">Genberegn rapporter</button>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <p>Prototype til 2. samtale, Social Sundhed Aarhus &middot; Martin Davidsen &middot; maj 2026 &middot; <strong>syntetiske data, seed=42</strong></p>
+</footer>
+
+<!-- sql.js fra CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
